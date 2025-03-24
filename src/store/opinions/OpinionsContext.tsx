@@ -1,9 +1,11 @@
 import { createContext, useEffect, useState } from "react";
 import { Opinion } from "../../types";
 
+type NewOpinion = Omit<Opinion, "id" | "votes">;
+
 type OpinionsContextType = {
   opinions: Opinion[];
-  addOpinion: (opinion: Opinion) => void;
+  addOpinion: (opinion: NewOpinion) => void;
   upvoteOpinion: (id: string) => void;
   downvoteOpinion: (id: string) => void;
 };
@@ -27,7 +29,7 @@ export function OpinionsContextProvider({
     loadOpinions();
   }, []);
 
-  async function addOpinion(enteredOpinionData: Opinion) {
+  async function addOpinion(enteredOpinionData: NewOpinion) {
     const response = await fetch("http://localhost:3000/opinions", {
       method: "POST",
       headers: {
@@ -36,15 +38,20 @@ export function OpinionsContextProvider({
       body: JSON.stringify(enteredOpinionData),
     });
 
-    if (!response.ok) {
-      return;
-    }
+    if (!response.ok) return;
 
     const savedOpinion: Opinion = await response.json();
     setOpinions((prevOpinions) => [savedOpinion, ...prevOpinions]);
   }
 
-  function upvoteOpinion(id: string) {
+  async function upvoteOpinion(id: string) {
+    const response = await fetch(
+      `http://localhost:3000/opinions/${id}/upvote`,
+      { method: "POST" }
+    );
+
+    if (!response.ok) return;
+
     setOpinions((prevOpinions) => {
       return prevOpinions.map((opinion) => {
         if (opinion.id === id) {
@@ -55,7 +62,14 @@ export function OpinionsContextProvider({
     });
   }
 
-  function downvoteOpinion(id: string) {
+  async function downvoteOpinion(id: string) {
+    const response = await fetch(
+      `http://localhost:3000/opinions/${id}/downvote`,
+      { method: "POST" }
+    );
+
+    if (!response.ok) return;
+
     setOpinions((prevOpinions) => {
       return prevOpinions.map((opinion) => {
         if (opinion.id === id) {
